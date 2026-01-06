@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Tumor Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #764ba2;
+            background: #f0f0f5;
+        }
+
+        .upload-section.dragover {
+            background: #e8eaf6;
+            border-color: #5c6bc0;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .btn-upload {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .results-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .result-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .preview-image {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .prediction-result {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .prediction-result h4 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .prediction-result .tumor-type {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .confidence-bar {
+            background: rgba(255,255,255,0.3);
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .confidence-fill {
+            background: #4caf50;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transition: width 1s ease;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .info-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #333;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .download-section {
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-download {
+            background: #4caf50;
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-download:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-reset {
+            background: #f44336;
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-reset:hover {
+            background: #da190b;
+            transform: translateY(-2px);
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .error-message {
+            background: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1> Brain Tumor Detection System</h1>
+            <p>AI-Powered MRI Analysis using VGG19 Deep Learning Model</p>
+        </div>
+
+        <div class="main-content">
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-icon"></div>
+                <h2>Upload MRI Scan</h2>
+                <p style="margin: 20px 0; color: #666;">
+                    Drag and drop your MRI image here or click to browse
+                </p>
+                <div class="file-input-wrapper">
+                    <button class="btn-upload">Choose MRI Image</button>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+                <p style="margin-top: 20px; font-size: 0.9em; color: #999;">
+                    Supported formats: JPG, PNG, JPEG
+                </p>
+            </div>
+
+            <div class="loading" id="loadingSection">
+                <div class="spinner"></div>
+                <h3>Analyzing MRI Scan...</h3>
+                <p>Please wait while our AI model processes your image</p>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <div class="results-grid">
+                    <div class="result-card">
+                        <h3>📷 Original MRI Scan</h3>
+                        <img id="originalImage" class="preview-image" src="" alt="Original MRI">
+                    </div>
+
+                    <div class="result-card">
+                        <h3> Tumor Localization (GradCAM)</h3>
+                        <img id="heatmapImage" class="preview-image" src="" alt="GradCAM Heatmap">
+                        <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                            Red/Yellow regions indicate potential tumor location
+                        </p>
+                    </div>
+                </div>
+
+                <div class="prediction-result">
+                    <h4> Diagnosis Result</h4>
+                    <div class="tumor-type" id="tumorType">-</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="confidenceBar" style="width: 0%">
+                            <span id="confidenceText">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Model Used</div>
+                        <div class="info-value">VGG19</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Model Accuracy</div>
+                        <div class="info-value">89.71%</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Processing Time</div>
+                        <div class="info-value" id="processingTime">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Image Size</div>
+                        <div class="info-value" id="imageSize">224x224</div>
+                    </div>
+                </div>
+
+                <div class="download-section">
+                    <h3 style="margin-bottom: 20px;"> Download Report</h3>
+                    <button class="btn-download" id="downloadBtn">
+                         Download PDF Report
+                    </button>
+                    <button class="btn-reset" onclick="resetAnalysis()">
+                         Analyze Another Image
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p> Brain Tumor Detection System | Powered by Deep Learning | VGG19 Model (89.71% Accuracy)</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">
+                 This is a diagnostic aid tool. Please consult healthcare professionals for medical decisions.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let currentPrediction = null;
+
+        const fileInput = document.getElementById('fileInput');
+        const uploadSection = document.getElementById('uploadSection');
+        const loadingSection = document.getElementById('loadingSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const errorMessage = document.getElementById('errorMessage');
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        function handleFile(file) {
+            if (!file.type.match('image.*')) {
+                showError('Please upload an image file (JPG, PNG, JPEG)');
+                return;
+            }
+
+            uploadSection.style.display = 'none';
+            loadingSection.style.display = 'block';
+            resultsSection.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    showError(data.error || 'An error occurred during prediction');
+                    resetAnalysis();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Failed to connect to the server. Make sure Flask app is running.');
+                resetAnalysis();
+            });
+        }
+
+        function displayResults(data) {
+            currentPrediction = data;
+
+            document.getElementById('originalImage').src = data.images.original;
+            document.getElementById('heatmapImage').src = data.images.heatmap;
+            
+            document.getElementById('tumorType').textContent = data.prediction.class;
+            document.getElementById('confidenceText').textContent = data.prediction.confidence + '%';
+            document.getElementById('processingTime').textContent = data.metadata.processing_time + 's';
+
+            setTimeout(() => {
+                document.getElementById('confidenceBar').style.width = data.prediction.confidence + '%';
+            }, 100);
+
+            loadingSection.style.display = 'none';
+            resultsSection.style.display = 'block';
+        }
+
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            if (!currentPrediction) {
+                showError('No prediction data available');
+                return;
+            }
+
+            fetch('/download-report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(currentPrediction)
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error('Failed to generate report');
+                }
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `brain_tumor_report_${new Date().getTime()}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Failed to download report. Make sure Flask server is running.');
+            });
+        });
+
+        function resetAnalysis() {
+            resultsSection.style.display = 'none';
+            uploadSection.style.display = 'block';
+            loadingSection.style.display = 'none';
+            fileInput.value = '';
+            currentPrediction = null;
+            document.getElementById('confidenceBar').style.width = '0%';
+        }
+    </script>
+</body>
+</html>
